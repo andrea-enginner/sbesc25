@@ -31,11 +31,10 @@ export default function Features() {
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-16">
                     <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                        Por que escolher nossa solução?
+                        Nosso projeto, sua solução!
                     </h2>
                     <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                        Combinamos as melhores tecnologias para oferecer uma experiência
-                        excepcional aos nossos usuários.
+
                     </p>
                 </div>
 

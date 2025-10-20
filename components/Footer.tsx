@@ -8,7 +8,7 @@ export default function Footer() {
             <div className="max-w-7xl mx-auto">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div className="md:col-span-2">
-                        <h3 className="text-2xl font-bold mb-4">SBESC 2025</h3>
+                        <h3 className="text-2xl font-bold mb-4">Equipe [deméter] - SBESC 2025</h3>
                         <p className="text-gray-400 mb-6 max-w-md">
                             Transformando ideias em realidade através de tecnologia inovadora
                             e soluções conectadas com Supabase.
