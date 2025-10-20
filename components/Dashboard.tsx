@@ -41,7 +41,7 @@ export default function Dashboard() {
         if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
             console.log('URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
         }
-        
+
         fetchData()
         // Atualizar dados a cada 30 segundos para simular tempo real
         const interval = setInterval(fetchData, 30000)
@@ -50,15 +50,40 @@ export default function Dashboard() {
 
     const fetchData = async () => {
         try {
-            console.log('🔄 Buscando dados do Supabase...')
+            console.log('🔄 [VERCEL DEBUG] Iniciando busca de dados...')
+            
+            // Verificar variáveis de ambiente no cliente
+            console.log('🔍 [VERCEL DEBUG] Verificando variáveis:')
+            console.log('- URL definida:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
+            console.log('- Key definida:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
             
             // Verificar se o cliente Supabase está configurado
             if (!supabase) {
-                console.error('❌ Cliente Supabase não configurado')
+                console.error('❌ [VERCEL DEBUG] Cliente Supabase não configurado')
                 return
             }
 
+            console.log('🔍 [VERCEL DEBUG] Testando conexão com Supabase...')
+
+            // Teste de conexão básica primeiro
+            try {
+                const { data: testData, error: testError } = await supabase
+                    .from('dispositivos')
+                    .select('count(*)')
+                    .limit(1)
+
+                if (testError) {
+                    console.error('❌ [VERCEL DEBUG] Erro de conexão:', testError.message)
+                    console.error('Código do erro:', testError.code)
+                } else {
+                    console.log('✅ [VERCEL DEBUG] Conexão com Supabase OK')
+                }
+            } catch (connError) {
+                console.error('❌ [VERCEL DEBUG] Erro de conexão geral:', connError)
+            }
+
             // Buscar últimos parâmetros do solo
+            console.log('🔄 [VERCEL DEBUG] Buscando dados do solo...')
             const { data: solos, error: errorSolo } = await supabase
                 .from('parametros_solo')
                 .select('*')
@@ -66,28 +91,35 @@ export default function Dashboard() {
                 .limit(20)
 
             // Buscar últimos parâmetros climáticos
+            console.log('🔄 [VERCEL DEBUG] Buscando dados climáticos...')
             const { data: climaticos, error: errorClima } = await supabase
                 .from('parametros_climaticos')
                 .select('*')
                 .order('data_hora', { ascending: false })
                 .limit(20)
 
-            console.log('📊 Resultados da busca:')
+            console.log('📊 [VERCEL DEBUG] Resultados da busca:')
             if (errorSolo) {
-                console.error('❌ Erro ao buscar dados do solo:', errorSolo.message)
-                console.error('Detalhes:', errorSolo)
+                console.error('❌ [VERCEL DEBUG] Erro ao buscar dados do solo:')
+                console.error('- Mensagem:', errorSolo.message)
+                console.error('- Código:', errorSolo.code)
+                console.error('- Detalhes:', errorSolo.details)
+                console.error('- Hint:', errorSolo.hint)
             } else {
-                console.log('✅ Dados do solo:', solos?.length || 0, 'registros')
+                console.log('✅ [VERCEL DEBUG] Dados do solo:', solos?.length || 0, 'registros')
                 if (solos?.length > 0) {
                     console.log('Primeiro registro solo:', solos[0])
                 }
             }
 
             if (errorClima) {
-                console.error('❌ Erro ao buscar dados climáticos:', errorClima.message)
-                console.error('Detalhes:', errorClima)
+                console.error('❌ [VERCEL DEBUG] Erro ao buscar dados climáticos:')
+                console.error('- Mensagem:', errorClima.message)
+                console.error('- Código:', errorClima.code)
+                console.error('- Detalhes:', errorClima.details)
+                console.error('- Hint:', errorClima.hint)
             } else {
-                console.log('✅ Dados climáticos:', climaticos?.length || 0, 'registros')
+                console.log('✅ [VERCEL DEBUG] Dados climáticos:', climaticos?.length || 0, 'registros')
                 if (climaticos?.length > 0) {
                     console.log('Primeiro registro clima:', climaticos[0])
                 }
@@ -97,7 +129,8 @@ export default function Dashboard() {
             setParametrosClimaticos(climaticos || [])
             setLastUpdate(new Date())
         } catch (error) {
-            console.error('❌ Erro geral ao buscar dados:', error)
+            console.error('❌ [VERCEL DEBUG] Erro geral ao buscar dados:', error)
+            console.error('Stack trace:', error.stack)
         } finally {
             setLoading(false)
         }
