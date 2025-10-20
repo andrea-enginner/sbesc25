@@ -34,6 +34,14 @@ export default function Dashboard() {
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
 
     useEffect(() => {
+        // Debug: verificar variáveis de ambiente
+        console.log('🔍 Debug Deploy - Variáveis:')
+        console.log('URL configurada:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Sim' : '❌ Não')
+        console.log('Key configurada:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Sim' : '❌ Não')
+        if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+            console.log('URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+        }
+        
         fetchData()
         // Atualizar dados a cada 30 segundos para simular tempo real
         const interval = setInterval(fetchData, 30000)
@@ -43,6 +51,12 @@ export default function Dashboard() {
     const fetchData = async () => {
         try {
             console.log('🔄 Buscando dados do Supabase...')
+            
+            // Verificar se o cliente Supabase está configurado
+            if (!supabase) {
+                console.error('❌ Cliente Supabase não configurado')
+                return
+            }
 
             // Buscar últimos parâmetros do solo
             const { data: solos, error: errorSolo } = await supabase
@@ -58,16 +72,25 @@ export default function Dashboard() {
                 .order('data_hora', { ascending: false })
                 .limit(20)
 
+            console.log('📊 Resultados da busca:')
             if (errorSolo) {
-                console.error('❌ Erro ao buscar dados do solo:', errorSolo)
+                console.error('❌ Erro ao buscar dados do solo:', errorSolo.message)
+                console.error('Detalhes:', errorSolo)
             } else {
                 console.log('✅ Dados do solo:', solos?.length || 0, 'registros')
+                if (solos?.length > 0) {
+                    console.log('Primeiro registro solo:', solos[0])
+                }
             }
 
             if (errorClima) {
-                console.error('❌ Erro ao buscar dados climáticos:', errorClima)
+                console.error('❌ Erro ao buscar dados climáticos:', errorClima.message)
+                console.error('Detalhes:', errorClima)
             } else {
                 console.log('✅ Dados climáticos:', climaticos?.length || 0, 'registros')
+                if (climaticos?.length > 0) {
+                    console.log('Primeiro registro clima:', climaticos[0])
+                }
             }
 
             setParametrosSolo(solos || [])

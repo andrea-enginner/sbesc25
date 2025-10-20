@@ -1,5 +1,5 @@
 import Hero from '@/components/Hero'
-//import Features from '@/components/Features'
+import Features from '@/components/Features'
 import Dashboard from '@/components/Dashboard'
 import Footer from '@/components/Footer'
 
@@ -8,7 +8,7 @@ export default function Home() {
         <main className="min-h-screen">
             <Hero />
             <Dashboard />
-            {/* <Features /> */}
+            <Features />
             <Footer />
         </main>
     )

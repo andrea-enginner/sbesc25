@@ -21,8 +21,6 @@ export default function Hero() {
                         monitorando parâmetros do solo e climáticos em tempo real.
                     </p>
                 </div>
-
-
                 <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                     <div className="p-6">
                         <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
