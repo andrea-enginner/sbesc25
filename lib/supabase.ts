@@ -5,15 +5,15 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 // Verificar se as variáveis estão definidas
 if (!supabaseUrl) {
-  console.error('❌ NEXT_PUBLIC_SUPABASE_URL não está definida')
+    console.error('❌ NEXT_PUBLIC_SUPABASE_URL não está definida')
 }
 
 if (!supabaseAnonKey) {
-  console.error('❌ NEXT_PUBLIC_SUPABASE_ANON_KEY não está definida')
+    console.error('❌ NEXT_PUBLIC_SUPABASE_ANON_KEY não está definida')
 }
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Variáveis de ambiente do Supabase não estão configuradas')
+    throw new Error('Variáveis de ambiente do Supabase não estão configuradas')
 }
 
 console.log('🔗 Configurando cliente Supabase...')

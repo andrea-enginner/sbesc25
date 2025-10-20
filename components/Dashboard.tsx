@@ -51,12 +51,12 @@ export default function Dashboard() {
     const fetchData = async () => {
         try {
             console.log('🔄 [VERCEL DEBUG] Iniciando busca de dados...')
-            
+
             // Verificar variáveis de ambiente no cliente
             console.log('🔍 [VERCEL DEBUG] Verificando variáveis:')
             console.log('- URL definida:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
             console.log('- Key definida:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-            
+
             // Verificar se o cliente Supabase está configurado
             if (!supabase) {
                 console.error('❌ [VERCEL DEBUG] Cliente Supabase não configurado')
@@ -130,7 +130,7 @@ export default function Dashboard() {
             setLastUpdate(new Date())
         } catch (error) {
             console.error('❌ [VERCEL DEBUG] Erro geral ao buscar dados:', error)
-            console.error('Stack trace:', error.stack)
+            console.error('Stack trace:', (error as Error).stack)
         } finally {
             setLoading(false)
         }
