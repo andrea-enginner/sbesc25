@@ -6,9 +6,7 @@ DROP POLICY IF EXISTS "Permitir leitura de dispositivos" ON dispositivos;
 DROP POLICY IF EXISTS "Permitir inserção de dispositivos" ON dispositivos;
 DROP POLICY IF EXISTS "Permitir inserção parametros solo" ON parametros_solo;
 DROP POLICY IF EXISTS "Permitir leitura parametros solo" ON parametros_solo;
-DROP POLICY IF EXISTS "Permitir inserção parametros climaticos" ON parametros_climaticos;
-DROP POLICY IF EXISTS "Permitir leitura parametros climaticos" ON parametros_climaticos;
-DROP POLICY IF EXISTS "Permitir inserção de contatos" ON contacts;
+  DROP POLICY IF EXISTS "Permitir inserção de contatos" ON contacts;
 DROP POLICY IF EXISTS "Permitir leitura de contatos" ON contacts;
 
 -- Criar políticas corretas para permitir acesso público (para esta versão de visualização)
@@ -24,13 +22,6 @@ CREATE POLICY "Permitir inserção parametros solo" ON parametros_solo
 CREATE POLICY "Permitir leitura parametros solo" ON parametros_solo
   FOR SELECT USING (true);
 
--- Parâmetros climáticos: permitir inserção e leitura públicas
-CREATE POLICY "Permitir inserção parametros climaticos" ON parametros_climaticos
-  FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Permitir leitura parametros climaticos" ON parametros_climaticos
-  FOR SELECT USING (true);
-
 -- Contatos: permitir inserção pública e leitura (para administração)
 CREATE POLICY "Permitir inserção de contatos" ON contacts
   FOR INSERT WITH CHECK (true);
@@ -42,5 +33,5 @@ CREATE POLICY "Permitir leitura de contatos" ON contacts
 SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual 
 FROM pg_policies 
 WHERE schemaname = 'public' 
-AND tablename IN ('dispositivos', 'parametros_solo', 'parametros_climaticos', 'contacts')
+AND tablename IN ('dispositivos', 'parametros_solo', 'contacts')
 ORDER BY tablename, policyname;

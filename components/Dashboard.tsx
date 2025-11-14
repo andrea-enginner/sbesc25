@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Droplets, Thermometer, Sun, Cloud, Leaf, Zap, RefreshCw } from 'lucide-react'
+import { Droplets, Thermometer, RefreshCw, Leaf } from 'lucide-react'
 
 interface ParametrosSolo {
     id: string
@@ -17,144 +17,45 @@ interface ParametrosSolo {
     potassio: number
 }
 
-interface ParametrosClimaticos {
-    id: string
-    id_dispositivo: string
-    data_hora: string
-    chuva: number
-    temperatura_ar: number
-    umidade_ar: number
-    radiacao_solar: number
-}
-
 export default function Dashboard() {
     const [parametrosSolo, setParametrosSolo] = useState<ParametrosSolo[]>([])
-    const [parametrosClimaticos, setParametrosClimaticos] = useState<ParametrosClimaticos[]>([])
     const [loading, setLoading] = useState(true)
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
 
-    useEffect(() => {
-        // Debug: verificar variáveis de ambiente
-        console.log('🔍 Debug Deploy - Variáveis:')
-        console.log('URL configurada:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Sim' : '❌ Não')
-        console.log('Key configurada:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Sim' : '❌ Não')
-        if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
-            console.log('URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-        }
-
-        fetchData()
-        // Atualizar dados a cada 30 segundos para simular tempo real
-        const interval = setInterval(fetchData, 30000)
-        return () => clearInterval(interval)
-    }, [])
-
-    const fetchData = async () => {
+    const loadSoilData = useCallback(async () => {
         try {
-            console.log('🔄 [VERCEL DEBUG] Iniciando busca de dados...')
-
-            // Verificar variáveis de ambiente no cliente
-            console.log('🔍 [VERCEL DEBUG] Verificando variáveis:')
-            console.log('- URL definida:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
-            console.log('- Key definida:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-
-            if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-                console.error('❌ [VERCEL DEBUG] PROBLEMA: Variáveis de ambiente não configuradas na Vercel!')
-                console.error('Configure as seguintes variáveis na Vercel:')
-                console.error('1. NEXT_PUBLIC_SUPABASE_URL = https://vbniaajmssoibcvadwzf.supabase.co')
-                console.error('2. NEXT_PUBLIC_SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...')
-                setLoading(false)
-                return
-            }
-
-            // Verificar se o cliente Supabase está configurado
-            if (!supabase) {
-                console.error('❌ [VERCEL DEBUG] Cliente Supabase não configurado')
-                return
-            }
-
-            console.log('🔍 [VERCEL DEBUG] Testando conexão com Supabase...')
-
-            // Teste de conexão básica primeiro
-            try {
-                const { data: testData, error: testError } = await supabase
-                    .from('dispositivos')
-                    .select('count(*)')
-                    .limit(1)
-
-                if (testError) {
-                    console.error('❌ [VERCEL DEBUG] Erro de conexão:', testError.message)
-                    console.error('Código do erro:', testError.code)
-                } else {
-                    console.log('✅ [VERCEL DEBUG] Conexão com Supabase OK')
-                }
-            } catch (connError) {
-                console.error('❌ [VERCEL DEBUG] Erro de conexão geral:', connError)
-            }
-
-            // Buscar últimos parâmetros do solo
-            console.log('🔄 [VERCEL DEBUG] Buscando dados do solo...')
-            const { data: solos, error: errorSolo } = await supabase
+            const { data, error } = await supabase
                 .from('parametros_solo')
                 .select('*')
                 .order('data_hora', { ascending: false })
                 .limit(20)
 
-            // Buscar últimos parâmetros climáticos
-            console.log('🔄 [VERCEL DEBUG] Buscando dados climáticos...')
-            const { data: climaticos, error: errorClima } = await supabase
-                .from('parametros_climaticos')
-                .select('*')
-                .order('data_hora', { ascending: false })
-                .limit(20)
+            if (error) throw error
 
-            console.log('📊 [VERCEL DEBUG] Resultados da busca:')
-            if (errorSolo) {
-                console.error('❌ [VERCEL DEBUG] Erro ao buscar dados do solo:')
-                console.error('- Mensagem:', errorSolo.message)
-                console.error('- Código:', errorSolo.code)
-                console.error('- Detalhes:', errorSolo.details)
-                console.error('- Hint:', errorSolo.hint)
-            } else {
-                console.log('✅ [VERCEL DEBUG] Dados do solo:', solos?.length || 0, 'registros')
-                if (solos?.length > 0) {
-                    console.log('Primeiro registro solo:', solos[0])
-                }
-            }
-
-            if (errorClima) {
-                console.error('❌ [VERCEL DEBUG] Erro ao buscar dados climáticos:')
-                console.error('- Mensagem:', errorClima.message)
-                console.error('- Código:', errorClima.code)
-                console.error('- Detalhes:', errorClima.details)
-                console.error('- Hint:', errorClima.hint)
-            } else {
-                console.log('✅ [VERCEL DEBUG] Dados climáticos:', climaticos?.length || 0, 'registros')
-                if (climaticos?.length > 0) {
-                    console.log('Primeiro registro clima:', climaticos[0])
-                }
-            }
-
-            setParametrosSolo(solos || [])
-            setParametrosClimaticos(climaticos || [])
+            setParametrosSolo(data ?? [])
             setLastUpdate(new Date())
-        } catch (error) {
-            console.error('❌ [VERCEL DEBUG] Erro geral ao buscar dados:', error)
-            console.error('Stack trace:', (error as Error).stack)
+        } catch (err) {
+            console.error('❌ Erro ao buscar dados do solo:', err)
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
+
+    useEffect(() => {
+        loadSoilData()
+        const interval = setInterval(loadSoilData, 30000)
+        return () => clearInterval(interval)
+    }, [loadSoilData])
 
     const latestSolo = parametrosSolo[0]
-    const latestClima = parametrosClimaticos[0]
 
     if (loading) {
         return (
-            <section className="py-20 px-4">
+            <section className="py-20 px-4 bg-[#107869] text-white">
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-                        <p className="mt-4 text-gray-600">Carregando dados de monitoramento...</p>
+                    <div className="text-center space-y-4">
+                        <div className="mx-auto h-12 w-12 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-sm uppercase tracking-wide">Carregando dados de solo...</p>
                     </div>
                 </div>
             </section>
@@ -162,244 +63,140 @@ export default function Dashboard() {
     }
 
     return (
-        <section className="py-20 px-4 bg-gray-50">
-            <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-12">
-                    <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                        Sistema de Monitoramento Agrícola
-                    </h2>
-                    <p className="text-xl text-gray-600 mb-4">
-                        Visualização dos dados coletados pelos sensores IoT
-                    </p>
-                    <div className="flex items-center justify-center gap-4">
+        <section className="py-20 px-4 bg-[#107869] text-white">
+            <div className="max-w-7xl mx-auto space-y-12">
+                <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                    <div>
+                        <h2 className="text-4xl font-bold">Monitoramento do Solo</h2>
+                        <p className="text-white/80 max-w-2xl mt-2">
+                            Leituras consolidadas de pH, condutividade elétrica, temperatura, umidade e nutrientes coletados pelos dispositivos em campo.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3">
                         {lastUpdate && (
-                            <p className="text-sm text-gray-500">
-                                Última atualização: {lastUpdate.toLocaleTimeString('pt-BR')}
+                            <p className="text-sm text-white/80">
+                                Última atualização: <span className="text-white">{lastUpdate.toLocaleTimeString('pt-BR')}</span>
                             </p>
                         )}
                         <button
-                            onClick={fetchData}
-                            disabled={loading}
-                            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors"
+                            type="button"
+                            onClick={() => {
+                                setLoading(true)
+                                loadSoilData()
+                            }}
+                            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide bg-white/10 border border-white/20 px-4 py-2 rounded-lg hover:bg-white/20 transition"
                         >
-                            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                            Atualizar
+                            <RefreshCw className="w-4 h-4" /> Atualizar agora
                         </button>
                     </div>
-                </div>
+                </header>
 
-                {/* Cards de dados mais recentes */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-                    {/* Parâmetros do Solo */}
-                    <div className="bg-white rounded-xl shadow-lg p-6">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="bg-green-100 p-3 rounded-lg">
-                                <Leaf className="w-6 h-6 text-green-600" />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-semibold text-gray-900">Parâmetros do Solo</h3>
-                                <p className="text-gray-600 text-sm">
-                                    {latestSolo ? `Última atualização: ${new Date(latestSolo.data_hora).toLocaleString('pt-BR')}` : 'Nenhum dado disponível'}
-                                </p>
-                            </div>
+                <div className="bg-[#1A5653] border border-white/10 rounded-xl p-6 shadow-lg shadow-black/20">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="bg-white/10 p-3 rounded-lg">
+                            <Leaf className="w-6 h-6 text-white" />
                         </div>
-
-                        {latestSolo ? (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                    <p className="text-sm text-gray-600">pH</p>
-                                    <p className="text-2xl font-bold text-gray-900">{latestSolo.ph || '--'}</p>
-                                </div>
-                                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                    <p className="text-sm text-gray-600">Cond. Elétrica (mS/cm)</p>
-                                    <p className="text-2xl font-bold text-gray-900">{latestSolo.condutividade_eletrica || '--'}</p>
-                                </div>
-                                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                    <div className="flex items-center justify-center gap-1">
-                                        <Thermometer className="w-4 h-4 text-blue-600" />
-                                        <p className="text-sm text-gray-600">Temp. Solo (°C)</p>
-                                    </div>
-                                    <p className="text-2xl font-bold text-gray-900">{latestSolo.temperatura_solo || '--'}</p>
-                                </div>
-                                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                                    <div className="flex items-center justify-center gap-1">
-                                        <Droplets className="w-4 h-4 text-blue-600" />
-                                        <p className="text-sm text-gray-600">Umidade (%)</p>
-                                    </div>
-                                    <p className="text-2xl font-bold text-gray-900">{latestSolo.umidade_solo || '--'}</p>
-                                </div>
-                                {/* NPK */}
-                                <div className="text-center p-4 bg-green-50 rounded-lg">
-                                    <p className="text-sm text-gray-600">Nitrogênio (mg/kg)</p>
-                                    <p className="text-xl font-bold text-green-700">{latestSolo.nitrogenio || '--'}</p>
-                                </div>
-                                <div className="text-center p-4 bg-green-50 rounded-lg">
-                                    <p className="text-sm text-gray-600">Fósforo (mg/kg)</p>
-                                    <p className="text-xl font-bold text-green-700">{latestSolo.fosforo || '--'}</p>
-                                </div>
-                                <div className="text-center p-4 bg-green-50 rounded-lg col-span-2">
-                                    <p className="text-sm text-gray-600">Potássio (mg/kg)</p>
-                                    <p className="text-xl font-bold text-green-700">{latestSolo.potassio || '--'}</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-center py-12 text-gray-500">
-                                <Leaf className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                                <p className="text-lg mb-2">Aguardando dados dos sensores</p>
-                                <p className="text-sm">Os dados de pH, condutividade, temperatura, umidade e NPK serão exibidos aqui quando os dispositivos IoT enviarem as medições.</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Parâmetros Climáticos */}
-                    <div className="bg-white rounded-xl shadow-lg p-6">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="bg-blue-100 p-3 rounded-lg">
-                                <Sun className="w-6 h-6 text-blue-600" />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-semibold text-gray-900">Parâmetros Climáticos</h3>
-                                <p className="text-gray-600 text-sm">
-                                    {latestClima ? `Última atualização: ${new Date(latestClima.data_hora).toLocaleString('pt-BR')}` : 'Nenhum dado disponível'}
-                                </p>
-                            </div>
-                        </div>
-
-                        {latestClima ? (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                    <div className="flex items-center justify-center gap-1">
-                                        <Cloud className="w-4 h-4 text-blue-600" />
-                                        <p className="text-sm text-gray-600">Chuva (mm)</p>
-                                    </div>
-                                    <p className="text-2xl font-bold text-blue-700">{latestClima.chuva || '--'}</p>
-                                </div>
-                                <div className="text-center p-4 bg-red-50 rounded-lg">
-                                    <div className="flex items-center justify-center gap-1">
-                                        <Thermometer className="w-4 h-4 text-red-600" />
-                                        <p className="text-sm text-gray-600">Temp. Ar (°C)</p>
-                                    </div>
-                                    <p className="text-2xl font-bold text-red-700">{latestClima.temperatura_ar || '--'}</p>
-                                </div>
-                                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                    <div className="flex items-center justify-center gap-1">
-                                        <Droplets className="w-4 h-4 text-blue-600" />
-                                        <p className="text-sm text-gray-600">Umidade (%)</p>
-                                    </div>
-                                    <p className="text-2xl font-bold text-blue-700">{latestClima.umidade_ar || '--'}</p>
-                                </div>
-                                <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                                    <div className="flex items-center justify-center gap-1">
-                                        <Zap className="w-4 h-4 text-yellow-600" />
-                                        <p className="text-sm text-gray-600">Radiação (W/m²)</p>
-                                    </div>
-                                    <p className="text-2xl font-bold text-yellow-700">{latestClima.radiacao_solar || '--'}</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-center py-12 text-gray-500">
-                                <Sun className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                                <p className="text-lg mb-2">Aguardando dados climáticos</p>
-                                <p className="text-sm">Os dados de chuva, temperatura do ar, umidade e radiação solar serão exibidos aqui quando os sensores enviarem as medições.</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Histórico de dados */}
-                <div className="bg-white rounded-xl shadow-lg p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-semibold text-gray-900">Histórico de Medições</h3>
-                        <div className="text-sm text-gray-500">
-                            {parametrosSolo.length + parametrosClimaticos.length} registros encontrados
+                        <div>
+                            <h3 className="text-xl font-semibold text-white">Última medição registrada</h3>
+                            <p className="text-sm text-white/80">
+                                {latestSolo ? `Coletada em ${new Date(latestSolo.data_hora).toLocaleString('pt-BR')} pelo dispositivo ${latestSolo.id_dispositivo}` : 'Nenhum dado disponível'}
+                            </p>
                         </div>
                     </div>
 
-                    {parametrosSolo.length === 0 && parametrosClimaticos.length === 0 ? (
-                        <div className="text-center py-12 text-gray-500">
-                            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                                <span className="text-2xl">📊</span>
+                    {latestSolo ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center">
+                                <p className="text-sm text-white/70">pH</p>
+                                <p className="text-3xl font-semibold text-white">{latestSolo.ph ?? '--'}</p>
                             </div>
-                            <p className="text-lg mb-2">Nenhum dado histórico disponível</p>
-                            <p className="text-sm">O histórico de medições será exibido aqui conforme os sensores enviarem dados para o banco.</p>
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center">
+                                <p className="text-sm text-white/70">Cond. Elétrica</p>
+                                <p className="text-3xl font-semibold text-white">{latestSolo.condutividade_eletrica ?? '--'}</p>
+                                <span className="text-xs uppercase tracking-wide text-white/60">mS/cm</span>
+                            </div>
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                    <Thermometer className="w-4 h-4 text-white" />
+                                    <p className="text-sm text-white/70">Temperatura do Solo</p>
+                                </div>
+                                <p className="text-3xl font-semibold text-white">{latestSolo.temperatura_solo ?? '--'}°C</p>
+                            </div>
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center">
+                                <div className="flex items-center justify-center gap-2">
+                                    <Droplets className="w-4 h-4 text-white" />
+                                    <p className="text-sm text-white/70">Umidade do Solo</p>
+                                </div>
+                                <p className="text-3xl font-semibold text-white">{latestSolo.umidade_solo ?? '--'}%</p>
+                            </div>
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center sm:col-span-2 lg:col-span-1">
+                                <p className="text-sm text-white/70">Nitrogênio</p>
+                                <p className="text-2xl font-semibold text-white">{latestSolo.nitrogenio ?? '--'} mg/kg</p>
+                            </div>
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center sm:col-span-2 lg:col-span-1">
+                                <p className="text-sm text-white/70">Fósforo</p>
+                                <p className="text-2xl font-semibold text-white">{latestSolo.fosforo ?? '--'} mg/kg</p>
+                            </div>
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center sm:col-span-2 lg:col-span-2">
+                                <p className="text-sm text-white/70">Potássio</p>
+                                <p className="text-2xl font-semibold text-white">{latestSolo.potassio ?? '--'} mg/kg</p>
+                            </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            {/* Tabela Solo */}
-                            <div>
-                                <div className="flex justify-between items-center mb-4">
-                                    <h4 className="text-lg font-medium text-gray-800">Parâmetros do Solo</h4>
-                                    <span className="text-sm text-gray-500">{parametrosSolo.length} registros</span>
-                                </div>
-                                {parametrosSolo.length > 0 ? (
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full text-sm">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th className="px-3 py-2 text-left">Dispositivo</th>
-                                                    <th className="px-3 py-2 text-left">Data/Hora</th>
-                                                    <th className="px-3 py-2 text-left">pH</th>
-                                                    <th className="px-3 py-2 text-left">Temp (°C)</th>
-                                                    <th className="px-3 py-2 text-left">Umidade (%)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {parametrosSolo.slice(0, 5).map((solo) => (
-                                                    <tr key={solo.id} className="border-b hover:bg-gray-50">
-                                                        <td className="px-3 py-2 font-mono text-xs">{solo.id_dispositivo}</td>
-                                                        <td className="px-3 py-2">{new Date(solo.data_hora).toLocaleString('pt-BR')}</td>
-                                                        <td className="px-3 py-2">{solo.ph || '--'}</td>
-                                                        <td className="px-3 py-2">{solo.temperatura_solo || '--'}</td>
-                                                        <td className="px-3 py-2">{solo.umidade_solo || '--'}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-8 text-gray-400">
-                                        <p>Nenhum dado de solo encontrado</p>
-                                    </div>
-                                )}
-                            </div>
+                        <div className="text-center py-12 text-white/70">
+                            <Leaf className="w-16 h-16 mx-auto mb-4 text-white/50" />
+                            <p className="text-lg mb-2 text-white">Nenhuma medição no momento</p>
+                            <p className="text-sm text-white/80">Assim que os dispositivos enviarem novas leituras do solo, elas aparecerão aqui.</p>
+                        </div>
+                    )}
+                </div>
 
-                            {/* Tabela Clima */}
-                            <div>
-                                <div className="flex justify-between items-center mb-4">
-                                    <h4 className="text-lg font-medium text-gray-800">Parâmetros Climáticos</h4>
-                                    <span className="text-sm text-gray-500">{parametrosClimaticos.length} registros</span>
-                                </div>
-                                {parametrosClimaticos.length > 0 ? (
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full text-sm">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th className="px-3 py-2 text-left">Dispositivo</th>
-                                                    <th className="px-3 py-2 text-left">Data/Hora</th>
-                                                    <th className="px-3 py-2 text-left">Chuva (mm)</th>
-                                                    <th className="px-3 py-2 text-left">Temp (°C)</th>
-                                                    <th className="px-3 py-2 text-left">Umidade (%)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {parametrosClimaticos.slice(0, 5).map((clima) => (
-                                                    <tr key={clima.id} className="border-b hover:bg-gray-50">
-                                                        <td className="px-3 py-2 font-mono text-xs">{clima.id_dispositivo}</td>
-                                                        <td className="px-3 py-2">{new Date(clima.data_hora).toLocaleString('pt-BR')}</td>
-                                                        <td className="px-3 py-2">{clima.chuva || '--'}</td>
-                                                        <td className="px-3 py-2">{clima.temperatura_ar || '--'}</td>
-                                                        <td className="px-3 py-2">{clima.umidade_ar || '--'}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-8 text-gray-400">
-                                        <p>Nenhum dado climático encontrado</p>
-                                    </div>
-                                )}
+                <div className="bg-[#1A5653] border border-white/10 rounded-xl p-6 shadow-lg shadow-black/20">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-semibold text-white">Histórico recente</h3>
+                        <span className="text-sm text-white/80">{parametrosSolo.length} registros exibidos</span>
+                    </div>
+
+                    {parametrosSolo.length === 0 ? (
+                        <div className="text-center py-12 text-white/70">
+                            <div className="w-16 h-16 mx-auto mb-4 bg-white/10 rounded-full flex items-center justify-center">
+                                <span className="text-2xl">📊</span>
                             </div>
+                            <p className="text-lg mb-2 text-white">Nenhum histórico disponível</p>
+                            <p className="text-sm text-white/80">O histórico será preenchido conforme os sensores enviarem novas medições.</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto border border-white/10 rounded-xl">
+                            <table className="min-w-full text-sm text-left text-white">
+                                <thead className="bg-white/10 text-white uppercase tracking-wide text-xs">
+                                    <tr>
+                                        <th className="px-3 py-2">Dispositivo</th>
+                                        <th className="px-3 py-2">Data/Hora</th>
+                                        <th className="px-3 py-2">pH</th>
+                                        <th className="px-3 py-2">Cond. Elétrica</th>
+                                        <th className="px-3 py-2">Temp (°C)</th>
+                                        <th className="px-3 py-2">Umidade (%)</th>
+                                        <th className="px-3 py-2">N</th>
+                                        <th className="px-3 py-2">P</th>
+                                        <th className="px-3 py-2">K</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {parametrosSolo.map((registro) => (
+                                        <tr key={registro.id} className="border-b border-white/10 hover:bg-white/5 transition-colors">
+                                            <td className="px-3 py-2 font-mono text-xs text-white/80">{registro.id_dispositivo}</td>
+                                            <td className="px-3 py-2 text-white/80">{new Date(registro.data_hora).toLocaleString('pt-BR')}</td>
+                                            <td className="px-3 py-2 text-white">{registro.ph ?? '--'}</td>
+                                            <td className="px-3 py-2 text-white">{registro.condutividade_eletrica ?? '--'}</td>
+                                            <td className="px-3 py-2 text-white">{registro.temperatura_solo ?? '--'}</td>
+                                            <td className="px-3 py-2 text-white">{registro.umidade_solo ?? '--'}</td>
+                                            <td className="px-3 py-2 text-white">{registro.nitrogenio ?? '--'}</td>
+                                            <td className="px-3 py-2 text-white">{registro.fosforo ?? '--'}</td>
+                                            <td className="px-3 py-2 text-white">{registro.potassio ?? '--'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>

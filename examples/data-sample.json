@@ -12,16 +12,6 @@
       "potassio": 156.7
     }
   ],
-  "parametros_climaticos": [
-    {
-      "id_dispositivo": "DF001",
-      "data_hora": "2025-01-27T10:30:00Z",
-      "chuva": 5.2,
-      "temperatura_ar": 28.3,
-      "umidade_ar": 72.1,
-      "radiacao_solar": 845.6
-    }
-  ],
   "curl_examples": {
     "inserir_dados_solo": {
       "url": "https://vbniaajmssoibcvadwzf.supabase.co/rest/v1/parametros_solo",

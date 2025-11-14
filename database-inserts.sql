@@ -36,34 +36,6 @@ INSERT INTO parametros_solo (id_dispositivo, data_hora, ph, condutividade_eletri
 ('DF003', NOW() - INTERVAL '1 hour 25 minutes', 6.3, 0.7, 22.1, 56.9, 40.8, 10.1, 141.5),
 ('DF003', NOW() - INTERVAL '3 hours', 6.5, 0.9, 23.5, 61.2, 42.7, 11.0, 146.7);
 
--- Inserir dados de parâmetros climáticos (últimas 24 horas)
-INSERT INTO parametros_climaticos (id_dispositivo, data_hora, chuva, temperatura_ar, umidade_ar, radiacao_solar) VALUES
--- DF001 - Dados mais recentes
-('DF001', NOW() - INTERVAL '10 minutes', 0.0, 28.3, 72.1, 845.6),
-('DF001', NOW() - INTERVAL '1 hour', 0.5, 27.8, 74.2, 823.4),
-('DF001', NOW() - INTERVAL '2 hours', 1.2, 29.1, 68.9, 867.2),
-('DF001', NOW() - INTERVAL '3 hours', 0.8, 26.9, 76.3, 789.1),
-('DF001', NOW() - INTERVAL '4 hours', 0.0, 28.7, 71.5, 856.3),
-
--- DF001 - Dados do período anterior
-('DF001', NOW() - INTERVAL '6 hours', 2.1, 31.2, 65.4, 912.8),
-('DF001', NOW() - INTERVAL '8 hours', 0.3, 25.6, 78.9, 745.2),
-('DF001', NOW() - INTERVAL '12 hours', 0.7, 27.4, 73.6, 834.7),
-('DF001', NOW() - INTERVAL '18 hours', 1.5, 26.8, 75.1, 798.4),
-('DF001', NOW() - INTERVAL '24 hours', 3.2, 24.9, 81.2, 687.3),
-
--- DF002 - Dados climáticos do segundo dispositivo
-('DF002', NOW() - INTERVAL '15 minutes', 0.1, 29.5, 69.8, 878.9),
-('DF002', NOW() - INTERVAL '1 hour 15 minutes', 0.4, 28.1, 73.4, 841.2),
-('DF002', NOW() - INTERVAL '2 hours 15 minutes', 0.0, 30.3, 67.2, 894.7),
-('DF002', NOW() - INTERVAL '5 hours', 1.8, 27.2, 76.8, 813.5),
-('DF002', NOW() - INTERVAL '8 hours', 2.5, 25.1, 79.6, 732.8),
-
--- DF003 - Dados climáticos do terceiro dispositivo
-('DF003', NOW() - INTERVAL '25 minutes', 0.0, 27.9, 70.3, 829.4),
-('DF003', NOW() - INTERVAL '1 hour 25 minutes', 0.2, 26.4, 77.1, 796.6),
-('DF003', NOW() - INTERVAL '3 hours', 0.9, 25.8, 74.7, 768.2);
-
 -- Inserir algumas mensagens de contato de exemplo (opcional)
 INSERT INTO contacts (name, email, message) VALUES
 ('João Silva', 'joao.silva@email.com', 'Interessado em implementar o sistema na nossa propriedade rural. Podem entrar em contato?'),
@@ -80,11 +52,6 @@ SELECT
     'Medições de solo',
     COUNT(*)
 FROM parametros_solo
-UNION ALL
-SELECT 
-    'Medições climáticas',
-    COUNT(*)
-FROM parametros_climaticos
 UNION ALL
 SELECT 
     'Mensagens de contato',

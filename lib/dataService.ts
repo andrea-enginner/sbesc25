@@ -12,17 +12,7 @@ export interface SoloData {
     potassio: number
 }
 
-export interface ClimateData {
-    id_dispositivo: string
-    data_hora: string
-    chuva: number
-    temperatura_ar: number
-    umidade_ar: number
-    radiacao_solar: number
-}
-
 export const dataService = {
-    // Enviar dados do solo
     async insertSoloData(data: SoloData) {
         const { data: result, error } = await supabase
             .from('parametros_solo')
@@ -33,18 +23,6 @@ export const dataService = {
         return result
     },
 
-    // Enviar dados climáticos
-    async insertClimateData(data: ClimateData) {
-        const { data: result, error } = await supabase
-            .from('parametros_climaticos')
-            .insert([data])
-            .select()
-
-        if (error) throw error
-        return result
-    },
-
-    // Buscar dados do solo por dispositivo
     async getSoloData(deviceId?: string, limit = 50) {
         let query = supabase
             .from('parametros_solo')
@@ -61,24 +39,6 @@ export const dataService = {
         return data
     },
 
-    // Buscar dados climáticos por dispositivo
-    async getClimateData(deviceId?: string, limit = 50) {
-        let query = supabase
-            .from('parametros_climaticos')
-            .select('*')
-            .order('data_hora', { ascending: false })
-
-        if (deviceId) {
-            query = query.eq('id_dispositivo', deviceId)
-        }
-
-        const { data, error } = await query.limit(limit)
-
-        if (error) throw error
-        return data
-    },
-
-    // Buscar dispositivos cadastrados
     async getDevices() {
         const { data, error } = await supabase
             .from('dispositivos')

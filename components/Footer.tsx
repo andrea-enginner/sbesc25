@@ -1,61 +1,45 @@
 'use client'
 
-import { Mail, Github, Twitter, Linkedin } from 'lucide-react'
-
 export default function Footer() {
-    return (
-        <footer className="bg-gray-900 text-white py-12 px-4">
-            <div className="max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <div className="md:col-span-2">
-                        <h3 className="text-2xl font-bold mb-4">Equipe [deméter] - SBESC 2025</h3>
-                        <p className="text-gray-400 mb-6 max-w-md">
-                            Transformando ideias em realidade através de tecnologia inovadora
-                            e soluções conectadas com Supabase.
-                        </p>
-                        <div className="flex space-x-4">
-                            <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                                <Github className="w-6 h-6" />
-                            </a>
-                            <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                                <Twitter className="w-6 h-6" />
-                            </a>
-                            <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                                <Linkedin className="w-6 h-6" />
-                            </a>
-                            <a href="mailto:contato@exemplo.com" className="text-gray-400 hover:text-white transition-colors">
-                                <Mail className="w-6 h-6" />
-                            </a>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h4 className="text-lg font-semibold mb-4">Links Rápidos</h4>
-                        <ul className="space-y-2">
-                            <li><a href="#inicio" className="text-gray-400 hover:text-white transition-colors">Início</a></li>
-                            <li><a href="#recursos" className="text-gray-400 hover:text-white transition-colors">Recursos</a></li>
-                            <li><a href="#contato" className="text-gray-400 hover:text-white transition-colors">Contato</a></li>
-                            <li><a href="#sobre" className="text-gray-400 hover:text-white transition-colors">Sobre</a></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 className="text-lg font-semibold mb-4">Tecnologias</h4>
-                        <ul className="space-y-2 text-gray-400">
-                            <li>Next.js</li>
-                            <li>TypeScript</li>
-                            <li>Supabase</li>
-                            <li>Tailwind CSS</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-                    <p className="text-gray-400">
-                        © 2025 SBESC. Todos os direitos reservados.
-                    </p>
-                </div>
-            </div>
-        </footer>
-    )
+  return (
+    <footer className="bg-[#1A5653] text-white py-10 px-4 border-t border-white/10">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold text-white">Démeter - Equipe SBESC 2025</h3>
+          <p className="text-sm text-white max-w-lg">
+            Painel em tempo real para monitoramento agronômico. Dados fornecidos pelo Supabase e sensores IoT de campo.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 text-sm text-white">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-white">Documentação</p>
+            <ul className="mt-2 space-y-1 text-white">
+              <li>
+                <a href="https://supabase.com/" target="_blank" rel="noreferrer" className="hover:text-white">
+                  Supabase Console
+                </a>
+              </li>
+              <li>
+                <a href="https://nextjs.org/docs" target="_blank" rel="noreferrer" className="hover:text-white">
+                  Next.js Docs
+                </a>
+              </li>
+              <li>
+                <a href="https://tailwindcss.com/docs" target="_blank" rel="noreferrer" className="hover:text-white">
+                  Tailwind CSS
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-white">Versão</p>
+            <ul className="mt-2 space-y-1 text-white">
+              <li>Painel v0.3.0-preview</li>
+              <li>Atualizado em {new Date().toLocaleDateString('pt-BR')}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </footer>
+  )
 }
