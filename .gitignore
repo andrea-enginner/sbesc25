@@ -1,13 +1,6 @@
 # Arquivos de configuração sensíveis - NUNCA subir para GitHub
-.env.local
-.env
-.env.development.local
-.env.test.local
-.env.production.local
 
-# Arquivos que podem conter credenciais
-*.env
-.env.*
+
 
 # Dependências
 node_modules/
@@ -57,8 +50,6 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env
 
 # IDE files
 .vscode/
@@ -89,6 +80,3 @@ Thumbs.db
 # Next.js
 .next/
 out/
-
-# Arquivos locais de desenvolvimento
-.local
