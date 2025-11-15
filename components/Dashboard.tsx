@@ -1,41 +1,43 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
-import { Droplets, Thermometer, RefreshCw, Leaf } from 'lucide-react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { RefreshCw, Leaf } from 'lucide-react'
 
-interface ParametrosSolo {
-    id: string
-    id_dispositivo: string
-    data_hora: string
+type ParametroSolo = {
+    id: number
     ph: number
-    condutividade_eletrica: number
-    temperatura_solo: number
-    umidade_solo: number
-    nitrogenio: number
-    fosforo: number
-    potassio: number
+}
+
+function describePh(ph: number) {
+    if (ph < 5.5) return 'Solo muito ácido'
+    if (ph < 6.5) return 'Faixa levemente ácida'
+    if (ph <= 7.5) return 'Equilíbrio adequado'
+    return 'Solo alcalino'
 }
 
 export default function Dashboard() {
-    const [parametrosSolo, setParametrosSolo] = useState<ParametrosSolo[]>([])
+    const [parametrosSolo, setParametrosSolo] = useState<ParametroSolo[]>([])
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
 
     const loadSoilData = useCallback(async () => {
         try {
-            const { data, error } = await supabase
-                .from('parametros_solo')
-                .select('*')
-                .order('data_hora', { ascending: false })
-                .limit(20)
+            const response = await fetch('/api/parametro-solo', {
+                cache: 'no-store',
+            })
 
-            if (error) throw error
+            if (!response.ok) {
+                throw new Error('Falha ao buscar dados no backend')
+            }
 
-            setParametrosSolo(data ?? [])
+            const data: ParametroSolo[] = await response.json()
+            setParametrosSolo(data)
             setLastUpdate(new Date())
+            setError(null)
         } catch (err) {
             console.error('❌ Erro ao buscar dados do solo:', err)
+            setError('Não foi possível carregar os dados do MySQL.')
         } finally {
             setLoading(false)
         }
@@ -49,13 +51,29 @@ export default function Dashboard() {
 
     const latestSolo = parametrosSolo[0]
 
+    const averagePh = useMemo(() => {
+        if (!parametrosSolo.length) return null
+        const sum = parametrosSolo.reduce((total, registro) => total + registro.ph, 0)
+        return Number((sum / parametrosSolo.length).toFixed(2))
+    }, [parametrosSolo])
+
+    const minPh = useMemo(() => {
+        if (!parametrosSolo.length) return null
+        return Math.min(...parametrosSolo.map((registro) => registro.ph))
+    }, [parametrosSolo])
+
+    const maxPh = useMemo(() => {
+        if (!parametrosSolo.length) return null
+        return Math.max(...parametrosSolo.map((registro) => registro.ph))
+    }, [parametrosSolo])
+
     if (loading) {
         return (
             <section className="py-20 px-4 bg-[#107869] text-white">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center space-y-4">
                         <div className="mx-auto h-12 w-12 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-sm uppercase tracking-wide">Carregando dados de solo...</p>
+                        <p className="text-sm uppercase tracking-wide">Carregando dados do MySQL...</p>
                     </div>
                 </div>
             </section>
@@ -69,7 +87,7 @@ export default function Dashboard() {
                     <div>
                         <h2 className="text-4xl font-bold">Monitoramento do Solo</h2>
                         <p className="text-white/80 max-w-2xl mt-2">
-                            Leituras consolidadas de pH, condutividade elétrica, temperatura, umidade e nutrientes coletados pelos dispositivos em campo.
+                            Leitura contínua de pH capturada pelos sensores e armazenada diretamente no banco MySQL configurado.
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -91,55 +109,45 @@ export default function Dashboard() {
                     </div>
                 </header>
 
-                <div className="bg-[#1A5653] border border-white/10 rounded-xl p-6 shadow-lg shadow-black/20">
-                    <div className="flex items-center gap-3 mb-6">
+                {error && (
+                    <div className="bg-red-500/20 border border-red-400/40 text-white rounded-xl px-4 py-3 text-sm">
+                        {error}
+                    </div>
+                )}
+
+                <div className="bg-[#1A5653] border border-white/10 rounded-xl p-6 shadow-lg shadow-black/20 space-y-6">
+                    <div className="flex items-center gap-3">
                         <div className="bg-white/10 p-3 rounded-lg">
                             <Leaf className="w-6 h-6 text-white" />
                         </div>
                         <div>
                             <h3 className="text-xl font-semibold text-white">Última medição registrada</h3>
                             <p className="text-sm text-white/80">
-                                {latestSolo ? `Coletada em ${new Date(latestSolo.data_hora).toLocaleString('pt-BR')} pelo dispositivo ${latestSolo.id_dispositivo}` : 'Nenhum dado disponível'}
+                                {latestSolo ? `Registro #${latestSolo.id}` : 'Nenhum dado disponível'}
                             </p>
                         </div>
                     </div>
 
                     {latestSolo ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center">
-                                <p className="text-sm text-white/70">pH</p>
-                                <p className="text-3xl font-semibold text-white">{latestSolo.ph ?? '--'}</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
+                                <p className="text-sm text-white/70">pH atual</p>
+                                <p className="text-4xl font-semibold text-white">{latestSolo.ph.toFixed(2)}</p>
+                                <p className="text-xs uppercase tracking-wide text-white/60 mt-2">{describePh(latestSolo.ph)}</p>
                             </div>
-                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center">
-                                <p className="text-sm text-white/70">Cond. Elétrica</p>
-                                <p className="text-3xl font-semibold text-white">{latestSolo.condutividade_eletrica ?? '--'}</p>
-                                <span className="text-xs uppercase tracking-wide text-white/60">mS/cm</span>
+                            <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
+                                <p className="text-sm text-white/70">Média das últimas leituras</p>
+                                <p className="text-3xl font-semibold text-white">{averagePh ?? '--'}</p>
                             </div>
-                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center">
-                                <div className="flex items-center justify-center gap-2">
-                                    <Thermometer className="w-4 h-4 text-white" />
-                                    <p className="text-sm text-white/70">Temperatura do Solo</p>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
+                                    <p className="text-sm text-white/70">Menor pH</p>
+                                    <p className="text-3xl font-semibold text-white">{minPh ?? '--'}</p>
                                 </div>
-                                <p className="text-3xl font-semibold text-white">{latestSolo.temperatura_solo ?? '--'}°C</p>
-                            </div>
-                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center">
-                                <div className="flex items-center justify-center gap-2">
-                                    <Droplets className="w-4 h-4 text-white" />
-                                    <p className="text-sm text-white/70">Umidade do Solo</p>
+                                <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
+                                    <p className="text-sm text-white/70">Maior pH</p>
+                                    <p className="text-3xl font-semibold text-white">{maxPh ?? '--'}</p>
                                 </div>
-                                <p className="text-3xl font-semibold text-white">{latestSolo.umidade_solo ?? '--'}%</p>
-                            </div>
-                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center sm:col-span-2 lg:col-span-1">
-                                <p className="text-sm text-white/70">Nitrogênio</p>
-                                <p className="text-2xl font-semibold text-white">{latestSolo.nitrogenio ?? '--'} mg/kg</p>
-                            </div>
-                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center sm:col-span-2 lg:col-span-1">
-                                <p className="text-sm text-white/70">Fósforo</p>
-                                <p className="text-2xl font-semibold text-white">{latestSolo.fosforo ?? '--'} mg/kg</p>
-                            </div>
-                            <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-center sm:col-span-2 lg:col-span-2">
-                                <p className="text-sm text-white/70">Potássio</p>
-                                <p className="text-2xl font-semibold text-white">{latestSolo.potassio ?? '--'} mg/kg</p>
                             </div>
                         </div>
                     ) : (
@@ -170,29 +178,15 @@ export default function Dashboard() {
                             <table className="min-w-full text-sm text-left text-white">
                                 <thead className="bg-white/10 text-white uppercase tracking-wide text-xs">
                                     <tr>
-                                        <th className="px-3 py-2">Dispositivo</th>
-                                        <th className="px-3 py-2">Data/Hora</th>
+                                        <th className="px-3 py-2">ID</th>
                                         <th className="px-3 py-2">pH</th>
-                                        <th className="px-3 py-2">Cond. Elétrica</th>
-                                        <th className="px-3 py-2">Temp (°C)</th>
-                                        <th className="px-3 py-2">Umidade (%)</th>
-                                        <th className="px-3 py-2">N</th>
-                                        <th className="px-3 py-2">P</th>
-                                        <th className="px-3 py-2">K</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {parametrosSolo.map((registro) => (
                                         <tr key={registro.id} className="border-b border-white/10 hover:bg-white/5 transition-colors">
-                                            <td className="px-3 py-2 font-mono text-xs text-white/80">{registro.id_dispositivo}</td>
-                                            <td className="px-3 py-2 text-white/80">{new Date(registro.data_hora).toLocaleString('pt-BR')}</td>
-                                            <td className="px-3 py-2 text-white">{registro.ph ?? '--'}</td>
-                                            <td className="px-3 py-2 text-white">{registro.condutividade_eletrica ?? '--'}</td>
-                                            <td className="px-3 py-2 text-white">{registro.temperatura_solo ?? '--'}</td>
-                                            <td className="px-3 py-2 text-white">{registro.umidade_solo ?? '--'}</td>
-                                            <td className="px-3 py-2 text-white">{registro.nitrogenio ?? '--'}</td>
-                                            <td className="px-3 py-2 text-white">{registro.fosforo ?? '--'}</td>
-                                            <td className="px-3 py-2 text-white">{registro.potassio ?? '--'}</td>
+                                            <td className="px-3 py-2 font-mono text-xs text-white/80">#{registro.id}</td>
+                                            <td className="px-3 py-2 text-white">{registro.ph.toFixed(2)}</td>
                                         </tr>
                                     ))}
                                 </tbody>

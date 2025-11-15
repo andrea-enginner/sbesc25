@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="space-y-2">
           <h3 className="text-lg font-semibold text-white">Démeter - Equipe SBESC 2025</h3>
           <p className="text-sm text-white max-w-lg">
-            Painel em tempo real para monitoramento agronômico. Dados fornecidos pelo Supabase e sensores IoT de campo.
+            Painel em tempo real para monitoramento agronômico. Dados fornecidos por sensores IoT e armazenados em um banco MySQL dedicado.
           </p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 text-sm text-white">
@@ -15,13 +15,13 @@ export default function Footer() {
             <p className="text-xs uppercase tracking-wide text-white">Documentação</p>
             <ul className="mt-2 space-y-1 text-white">
               <li>
-                <a href="https://supabase.com/" target="_blank" rel="noreferrer" className="hover:text-white">
-                  Supabase Console
+                <a href="https://nextjs.org/docs" target="_blank" rel="noreferrer" className="hover:text-white">
+                  Next.js Docs
                 </a>
               </li>
               <li>
-                <a href="https://nextjs.org/docs" target="_blank" rel="noreferrer" className="hover:text-white">
-                  Next.js Docs
+                <a href="https://dev.mysql.com/doc/" target="_blank" rel="noreferrer" className="hover:text-white">
+                  MySQL Docs
                 </a>
               </li>
               <li>
