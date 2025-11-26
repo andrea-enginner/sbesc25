@@ -1,25 +1,61 @@
 import { NextResponse } from 'next/server'
-import type { ResultSetHeader, RowDataPacket } from 'mysql2'
-import { getDbPool } from '@/lib/mysql'
+import { getFirebaseDatabase } from '@/lib/firebase'
 
-type ParametroSoloRow = {
-    id: number
+type ParametroSolo = {
+    id: string
     ph: number
+    nitrogenio?: number
+    fosforo?: number
+    potassio?: number
+    temperatura?: number
+    umidade?: number
+    dataHora?: string
+    timestamp?: number
 }
 
 export async function GET() {
     try {
-        const pool = getDbPool()
-        const [rows] = await pool.query<RowDataPacket[]>(
-            'SELECT id, ph FROM parametro_solo ORDER BY id DESC'
-        )
+        const db = getFirebaseDatabase()
 
-        return NextResponse.json(
-            rows.map((row) => ({
-                id: row.id,
-                ph: Number(row.ph)
-            }))
-        )
+        // Primeiro tenta buscar de 'sensor' (estrutura existente no Firebase)
+        let ref = db.ref('sensor')
+        let snapshot = await ref.limitToLast(100).once('value')
+        let data = snapshot.val()
+
+        // Se não encontrar em 'sensor', tenta 'parametro_solo' (nova estrutura)
+        if (!data) {
+            ref = db.ref('parametro_solo')
+            snapshot = await ref.limitToLast(100).once('value')
+            data = snapshot.val()
+        }
+
+        if (!data) {
+            return NextResponse.json([])
+        }
+
+        // Converte o objeto do Firebase em array
+        const registros: ParametroSolo[] = Object.entries(data)
+            .map(([id, value]: [string, any]) => {
+                // Suporta tanto a estrutura antiga (sensor) quanto a nova (parametro_solo)
+                const ph = value.pH !== undefined ? Number(value.pH) : Number(value.ph)
+                const timestamp = value.timestamp || (value.dataHora ? new Date(value.dataHora).getTime() : 0)
+
+                return {
+                    id,
+                    ph: isNaN(ph) ? 0 : ph, // Garante que sempre tem um número
+                    nitrogenio: value.nitrogenio !== undefined ? Number(value.nitrogenio) : undefined,
+                    fosforo: value.fosforo !== undefined ? Number(value.fosforo) : undefined,
+                    potassio: value.potassio !== undefined ? Number(value.potassio) : undefined,
+                    temperatura: value.temperatura !== undefined ? Number(value.temperatura) : undefined,
+                    umidade: value.umidade !== undefined ? Number(value.umidade) : undefined,
+                    dataHora: value.dataHora,
+                    timestamp
+                }
+            })
+            .filter(reg => reg.ph > 0) // Remove registros sem pH válido
+            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+
+        return NextResponse.json(registros)
     } catch (error) {
         console.error('Erro ao buscar dados de parametro_solo', error)
         return NextResponse.json(
@@ -43,15 +79,24 @@ export async function POST(request: Request) {
             )
         }
 
-        const pool = getDbPool()
-        const [result] = await pool.execute<ResultSetHeader>(
-            'INSERT INTO parametro_solo (ph) VALUES (?)',
-            [body.ph]
-        )
+        const db = getFirebaseDatabase()
+        const ref = db.ref('parametro_solo')
+
+        const novoRegistro = {
+            ph: body.ph,
+            timestamp: Date.now()
+        }
+
+        const snapshot = await ref.push(novoRegistro)
+        const id = snapshot.key
+
+        if (!id) {
+            throw new Error('Não foi possível obter o ID do registro criado')
+        }
 
         return NextResponse.json(
             {
-                id: result.insertId,
+                id,
                 ph: body.ph
             },
             { status: 201 }

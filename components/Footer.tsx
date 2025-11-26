@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="space-y-2">
           <h3 className="text-lg font-semibold text-white">Démeter - Equipe SBESC 2025</h3>
           <p className="text-sm text-white max-w-lg">
-            Painel em tempo real para monitoramento agronômico. Dados fornecidos por sensores IoT e armazenados em um banco MySQL dedicado.
+            Painel em tempo real para monitoramento agronômico. Dados fornecidos por sensores IoT e armazenados no Firebase Realtime Database.
           </p>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 text-sm text-white">
@@ -20,8 +20,8 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="https://dev.mysql.com/doc/" target="_blank" rel="noreferrer" className="hover:text-white">
-                  MySQL Docs
+                <a href="https://firebase.google.com/docs/database" target="_blank" rel="noreferrer" className="hover:text-white">
+                  Firebase Docs
                 </a>
               </li>
               <li>

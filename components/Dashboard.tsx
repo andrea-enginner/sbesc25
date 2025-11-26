@@ -1,11 +1,18 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { RefreshCw, Leaf } from 'lucide-react'
+import { RefreshCw, Leaf, Droplets, Thermometer, Wind, Flame } from 'lucide-react'
 
 type ParametroSolo = {
-    id: number
+    id: string
     ph: number
+    nitrogenio?: number
+    fosforo?: number
+    potassio?: number
+    temperatura?: number
+    umidade?: number
+    dataHora?: string
+    timestamp?: number
 }
 
 function describePh(ph: number) {
@@ -37,7 +44,7 @@ export default function Dashboard() {
             setError(null)
         } catch (err) {
             console.error('❌ Erro ao buscar dados do solo:', err)
-            setError('Não foi possível carregar os dados do MySQL.')
+            setError('Não foi possível carregar os dados do Firebase.')
         } finally {
             setLoading(false)
         }
@@ -73,7 +80,7 @@ export default function Dashboard() {
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center space-y-4">
                         <div className="mx-auto h-12 w-12 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-sm uppercase tracking-wide">Carregando dados do MySQL...</p>
+                        <p className="text-sm uppercase tracking-wide">Carregando dados do Firebase...</p>
                     </div>
                 </div>
             </section>
@@ -87,7 +94,7 @@ export default function Dashboard() {
                     <div>
                         <h2 className="text-4xl font-bold">Monitoramento do Solo</h2>
                         <p className="text-white/80 max-w-2xl mt-2">
-                            Leitura contínua de pH capturada pelos sensores e armazenada diretamente no banco MySQL configurado.
+                            Leitura contínua de parâmetros do solo (pH, NPK, temperatura, umidade) capturada pelos sensores e armazenada diretamente no Firebase Realtime Database.
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -129,17 +136,90 @@ export default function Dashboard() {
                     </div>
 
                     {latestSolo ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
-                                <p className="text-sm text-white/70">pH atual</p>
-                                <p className="text-4xl font-semibold text-white">{latestSolo.ph.toFixed(2)}</p>
-                                <p className="text-xs uppercase tracking-wide text-white/60 mt-2">{describePh(latestSolo.ph)}</p>
+                        <div className="space-y-4">
+                            {/* Parâmetros principais */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                                <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
+                                    <div className="flex items-center justify-center gap-2 mb-2">
+                                        <Leaf className="w-4 h-4 text-white/70" />
+                                        <p className="text-sm text-white/70">pH</p>
+                                    </div>
+                                    <p className="text-3xl font-semibold text-white">{latestSolo.ph?.toFixed(2) ?? '--'}</p>
+                                    <p className="text-xs uppercase tracking-wide text-white/60 mt-1">{latestSolo.ph ? describePh(latestSolo.ph) : ''}</p>
+                                </div>
+                                
+                                {latestSolo.nitrogenio !== undefined && (
+                                    <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
+                                        <div className="flex items-center justify-center gap-2 mb-2">
+                                            <Flame className="w-4 h-4 text-white/70" />
+                                            <p className="text-sm text-white/70">Nitrogênio</p>
+                                        </div>
+                                        <p className="text-3xl font-semibold text-white">{latestSolo.nitrogenio.toFixed(1)}</p>
+                                        <p className="text-xs text-white/60 mt-1">mg/kg</p>
+                                    </div>
+                                )}
+                                
+                                {latestSolo.fosforo !== undefined && (
+                                    <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
+                                        <div className="flex items-center justify-center gap-2 mb-2">
+                                            <Flame className="w-4 h-4 text-white/70" />
+                                            <p className="text-sm text-white/70">Fósforo</p>
+                                        </div>
+                                        <p className="text-3xl font-semibold text-white">{latestSolo.fosforo.toFixed(2)}</p>
+                                        <p className="text-xs text-white/60 mt-1">mg/kg</p>
+                                    </div>
+                                )}
+                                
+                                {latestSolo.potassio !== undefined && (
+                                    <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
+                                        <div className="flex items-center justify-center gap-2 mb-2">
+                                            <Flame className="w-4 h-4 text-white/70" />
+                                            <p className="text-sm text-white/70">Potássio</p>
+                                        </div>
+                                        <p className="text-3xl font-semibold text-white">{latestSolo.potassio.toFixed(2)}</p>
+                                        <p className="text-xs text-white/60 mt-1">mg/kg</p>
+                                    </div>
+                                )}
+                                
+                                {latestSolo.temperatura !== undefined && (
+                                    <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
+                                        <div className="flex items-center justify-center gap-2 mb-2">
+                                            <Thermometer className="w-4 h-4 text-white/70" />
+                                            <p className="text-sm text-white/70">Temperatura</p>
+                                        </div>
+                                        <p className="text-3xl font-semibold text-white">{latestSolo.temperatura.toFixed(1)}</p>
+                                        <p className="text-xs text-white/60 mt-1">°C</p>
+                                    </div>
+                                )}
+                                
+                                {latestSolo.umidade !== undefined && (
+                                    <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
+                                        <div className="flex items-center justify-center gap-2 mb-2">
+                                            <Droplets className="w-4 h-4 text-white/70" />
+                                            <p className="text-sm text-white/70">Umidade</p>
+                                        </div>
+                                        <p className="text-3xl font-semibold text-white">{latestSolo.umidade.toFixed(1)}</p>
+                                        <p className="text-xs text-white/60 mt-1">%</p>
+                                    </div>
+                                )}
+                                
+                                {latestSolo.dataHora && (
+                                    <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
+                                        <div className="flex items-center justify-center gap-2 mb-2">
+                                            <Wind className="w-4 h-4 text-white/70" />
+                                            <p className="text-sm text-white/70">Data/Hora</p>
+                                        </div>
+                                        <p className="text-xs font-semibold text-white">{latestSolo.dataHora}</p>
+                                    </div>
+                                )}
                             </div>
-                            <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
-                                <p className="text-sm text-white/70">Média das últimas leituras</p>
-                                <p className="text-3xl font-semibold text-white">{averagePh ?? '--'}</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            
+                            {/* Estatísticas do pH */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
+                                    <p className="text-sm text-white/70">Média das últimas leituras (pH)</p>
+                                    <p className="text-3xl font-semibold text-white">{averagePh ?? '--'}</p>
+                                </div>
                                 <div className="p-5 bg-white/5 border border-white/10 rounded-lg text-center">
                                     <p className="text-sm text-white/70">Menor pH</p>
                                     <p className="text-3xl font-semibold text-white">{minPh ?? '--'}</p>
@@ -180,13 +260,25 @@ export default function Dashboard() {
                                     <tr>
                                         <th className="px-3 py-2">ID</th>
                                         <th className="px-3 py-2">pH</th>
+                                        <th className="px-3 py-2">Nitrogênio</th>
+                                        <th className="px-3 py-2">Fósforo</th>
+                                        <th className="px-3 py-2">Potássio</th>
+                                        <th className="px-3 py-2">Temperatura</th>
+                                        <th className="px-3 py-2">Umidade</th>
+                                        <th className="px-3 py-2">Data/Hora</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {parametrosSolo.map((registro) => (
                                         <tr key={registro.id} className="border-b border-white/10 hover:bg-white/5 transition-colors">
-                                            <td className="px-3 py-2 font-mono text-xs text-white/80">#{registro.id}</td>
-                                            <td className="px-3 py-2 text-white">{registro.ph.toFixed(2)}</td>
+                                            <td className="px-3 py-2 font-mono text-xs text-white/80">#{registro.id.slice(-8)}</td>
+                                            <td className="px-3 py-2 text-white">{registro.ph?.toFixed(2) ?? '--'}</td>
+                                            <td className="px-3 py-2 text-white">{registro.nitrogenio !== undefined ? registro.nitrogenio.toFixed(1) : '--'}</td>
+                                            <td className="px-3 py-2 text-white">{registro.fosforo !== undefined ? registro.fosforo.toFixed(2) : '--'}</td>
+                                            <td className="px-3 py-2 text-white">{registro.potassio !== undefined ? registro.potassio.toFixed(2) : '--'}</td>
+                                            <td className="px-3 py-2 text-white">{registro.temperatura !== undefined ? `${registro.temperatura.toFixed(1)}°C` : '--'}</td>
+                                            <td className="px-3 py-2 text-white">{registro.umidade !== undefined ? `${registro.umidade.toFixed(1)}%` : '--'}</td>
+                                            <td className="px-3 py-2 text-white/80 text-xs">{registro.dataHora ?? '--'}</td>
                                         </tr>
                                     ))}
                                 </tbody>

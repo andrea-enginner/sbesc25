@@ -1,6 +1,11 @@
 # Arquivos de configuração sensíveis - NUNCA subir para GitHub
-
-
+.env.local
+.env*.local
+firebase-service-account.json
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
 
 # Dependências
 node_modules/

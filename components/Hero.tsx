@@ -42,7 +42,7 @@ export default function Hero() {
                         <p className="text-xs uppercase tracking-wide text-white">Fonte de dados</p>
                         <div className="mt-2 flex items-center justify-center gap-2 text-white font-medium">
                             <Satellite className="w-4 h-4" />
-                            MySQL + Sensores IoT
+                            Firebase + Sensores IoT
                         </div>
                     </div>
                 </div>
